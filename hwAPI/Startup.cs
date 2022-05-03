@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using hwAPI.Common;
 
 namespace hwAPI
 {
@@ -18,6 +19,7 @@ namespace hwAPI
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
+            AppConfigure.setConfig(Configuration);
         }
 
         public IConfiguration Configuration { get; }
