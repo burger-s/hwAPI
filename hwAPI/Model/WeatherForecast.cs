@@ -1,6 +1,6 @@
 using System;
 
-namespace hwAPI
+namespace hwAPI.Model
 {
     public class WeatherForecast
     {

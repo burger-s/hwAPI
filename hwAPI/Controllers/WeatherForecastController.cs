@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using hwAPI.Model;
 using System.Threading.Tasks;
 
 namespace hwAPI.Controllers
