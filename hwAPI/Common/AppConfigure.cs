@@ -13,8 +13,8 @@ namespace hwAPI.Common
             _db= configuration["MongoDB:DatabaseName"];
             _CollectionName = configuration["MongoDB:CollectionName"];
         }
-        internal static string getConnectionString() => _connecttionString;
-        internal static string getdbString() => _db;
-        internal static string getCollectionNameString() => _CollectionName;
+        internal static string getConnectionString => _connecttionString;
+        internal static string getdbString => _db;
+        internal static string getCollectionNameString => _CollectionName;
     }
 }
