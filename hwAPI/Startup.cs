@@ -11,6 +11,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using hwAPI.Common;
+using hwAPI.Model.Core;
+using hwAPI.Model;
 
 namespace hwAPI
 {
@@ -27,6 +29,8 @@ namespace hwAPI
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            var _db = new RepositoryContext<Student>(AppConfigure.getConnectionString, AppConfigure.getdbString, AppConfigure.getCollectionNameString);
+            services.AddSingleton<IRepositoryContext<Student>>(_db);
 
             services.AddControllers();
         }

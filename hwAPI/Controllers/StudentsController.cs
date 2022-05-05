@@ -6,6 +6,8 @@ using System.Collections.Generic;
 using System.Linq;
 using hwAPI.Model;
 using hwAPI.Common;
+using hwAPI.Model.Core;
+using MongoDB.Bson;
 
 namespace hwAPI.Controllers
 {
@@ -15,25 +17,49 @@ namespace hwAPI.Controllers
     public class StudentsController : ControllerBase
     {
         private readonly ILogger<StudentsController> _logger;
+        private readonly IRepositoryContext<Student> _repo;
 
-        public StudentsController(ILogger<StudentsController> logger)
+        public StudentsController(ILogger<StudentsController> logger, IRepositoryContext<Student> repositoryContext)
         {
             _logger = logger;
+            _repo = repositoryContext;
         }
 
         [HttpGet]
-        public async Task<IEnumerable<Student>> Get()
+        public async Task<ActionResult<IEnumerable<Student>>> Get() => await _repo.Collection.Find(_ => true).ToListAsync();
+
+        // GET api/students/1
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Student>> Get(long id)
         {
-            //建立 mongo client
-            var client = new MongoClient(AppConfigure.getConnectionString());
-            //取得 database
-            var db = client.GetDatabase(AppConfigure.getdbString());
-            //取得 user collection           
-            var collection = db.GetCollection<Student>(AppConfigure.getCollectionNameString());
+            var student = _repo.Collection.Find(obj => obj.Id == id).FirstOrDefault();
+            if (student == null)
+                return new NotFoundResult();
+            return new ObjectResult(student);
+        }
 
-            var tmp = await collection.Find(_ => true).ToListAsync();
+        // POST api/students
+        [HttpPost]
+        public async Task<ActionResult<Student>> Post([FromBody] Student student)
+        {
+            student.Id = await _repo.Collection.CountDocumentsAsync(new BsonDocument()) + 1;
+            await _repo.Collection.InsertOneAsync(student);
+            return new OkObjectResult(student);
+        }
 
-            return tmp;
+        // DELETE api/students/1
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(long id)
+        {
+            var student = _repo.Collection.Find(obj => obj.Id == id).FirstOrDefault();
+            if (student == null)
+                return new NotFoundResult();
+
+            //Delete
+            var filter = Builders<Student>.Filter.Eq(m => m.Id, id);
+            var deleteResult = await _repo.Collection.DeleteOneAsync(filter);
+
+            return new OkResult();
         }
     }
 
