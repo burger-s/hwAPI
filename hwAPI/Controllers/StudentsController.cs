@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
+using System;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,22 +19,22 @@ namespace hwAPI.Controllers
     public class StudentsController : ControllerBase
     {
         private readonly ILogger<StudentsController> _logger;
-        private readonly IRepositoryContext<Student> _repo;
+        private readonly ITheRepository<Student> _repo;
 
-        public StudentsController(ILogger<StudentsController> logger, IRepositoryContext<Student> repositoryContext)
+        public StudentsController(ILogger<StudentsController> logger, ITheRepository<Student> repo)
         {
             _logger = logger;
-            _repo = repositoryContext;
+            _repo = repo;
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Student>>> Get() => await _repo.Collection.Find(_ => true).ToListAsync();
+        public async Task<ActionResult<IEnumerable<Student>>> Get() => new ObjectResult(await _repo.GetAll());
 
         // GET api/students/1
         [HttpGet("{id}")]
         public async Task<ActionResult<Student>> Get(long id)
         {
-            var student = _repo.Collection.Find(obj => obj.Id == id).FirstOrDefault();
+            var student = await _repo.Get(obj => obj.Id, id);
             if (student == null)
                 return new NotFoundResult();
             return new ObjectResult(student);
@@ -42,8 +44,24 @@ namespace hwAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<Student>> Post([FromBody] Student student)
         {
-            student.Id = await _repo.Collection.CountDocumentsAsync(new BsonDocument()) + 1;
-            await _repo.Collection.InsertOneAsync(student);
+            student.Id = await _repo.GetNextId();
+            await _repo.Create(student);
+            return new OkObjectResult(student);
+        }
+
+        // PUT api/todos/1
+        [HttpPut("{id}")]
+        public async Task<ActionResult<Student>> Put(long id, [FromBody] Student student)
+        {
+            var studentFromDb = await _repo.Get(m => m.Id, id);
+
+            if (studentFromDb == null)
+                return new NotFoundResult();
+
+            student.Id = studentFromDb.Id;
+            student.InternalId = studentFromDb.InternalId;
+            await _repo.Update(student, m => m.Id == id);
+
             return new OkObjectResult(student);
         }
 
@@ -51,14 +69,12 @@ namespace hwAPI.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(long id)
         {
-            var student = _repo.Collection.Find(obj => obj.Id == id).FirstOrDefault();
-            if (student == null)
+            var post = await _repo.Get(m => m.Id, id);
+
+            if (post == null)
                 return new NotFoundResult();
 
-            //Delete
-            var filter = Builders<Student>.Filter.Eq(m => m.Id, id);
-            var deleteResult = await _repo.Collection.DeleteOneAsync(filter);
-
+            await _repo.Delete(m => m.Id, id);
             return new OkResult();
         }
     }

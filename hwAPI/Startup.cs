@@ -29,8 +29,9 @@ namespace hwAPI
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            var _db = new RepositoryContext<Student>(AppConfigure.getConnectionString, AppConfigure.getdbString, AppConfigure.getCollectionNameString);
-            services.AddSingleton<IRepositoryContext<Student>>(_db);
+            var _context = new RepositoryContext<Student>(AppConfigure.getConnectionString, AppConfigure.getdbString, AppConfigure.getCollectionNameString);
+            var _db = new TheRepository<Student>(_context);
+            services.AddSingleton<ITheRepository<Student>>(_db);
 
             services.AddControllers();
         }
